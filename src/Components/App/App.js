@@ -5,25 +5,41 @@ import SearchBar from '../SearchBar/SearchBar';
 import SearchResults from '../SearchResults/SearchResults';
 import Playlist from '../Playlist/Playlist';
 
+import Spotify from '../../util/Spotify';
+
 class App extends React.Component {
   constructor(props){
     super(props);
 
     this.state = {
-      searchResults:[{ name:'initialName1', artisit:'initialArtist1', album:'initialAlbum1', id: '0'},
-                    { name:'initialName2', artisit:'initialArtist2', album:'initialAlbum2', id: '1'}],
+      searchResults:[],
       playlistName: 'initialPlaylistName',
-      playlistTracks: [{ name:'PlaylistName01', artisit:'PlaylistArtist01', album:'PlaylistAlbum01',id: '3'},
-      { name:'PlaylistName02', artisit:'PlaylistArtist02',album:'PlaylistAlbum02', id: '4' }]
+      playlistTracks: []
     };
     
     this.updatePlaylistName = this.updatePlaylistName.bind(this);
+    this.savePlaylist = this.savePlaylist.bind(this);
     this.addTrack = this.addTrack.bind(this);
     this.removeTrack = this.removeTrack.bind(this);
+    this.search = this.search.bind(this);
   }
 
   updatePlaylistName(newName){
     this.setState( {playlistName: newName} );
+  }
+
+  savePlaylist(){
+    console.log(">> App.js > savePlaylist()");
+    console.log("^^ playlistTracks: ", this.state.playlistTracks);
+    const trackUris = this.state.playlistTracks.map(track => track.uri);
+    console.log("After trackURIs");
+    Spotify.savePlaylist(this.state.playlistName, trackUris).then( () => {
+      this.setState( { 
+        playlistName: 'New Playlist',
+        playlistTracks: []
+      })
+    })
+    // return [];
   }
 
   addTrack(track){
@@ -42,20 +58,28 @@ class App extends React.Component {
     this.setState( {playlistTracks:tracks} );
   }
 
+  search(term){
+    console.log(" >> App.js > search(term) > term: ", term);
+    Spotify.search(term).then(searchResults => {
+      this.setState({ searchResults: searchResults })
+    });
+  }
+
   render(){
     console.log(" ==== Begin of App.js render() ====")
     return(
       <div>
         <h1>Ja<span className="highlight">mmm</span>ing</h1>
         <div className="App">
-          <SearchBar />
+          <SearchBar onSearch={this.search} />
           <div className="App-playlist">
             <SearchResults searchResults={this.state.searchResults} 
                             onAdd={this.addTrack} />
             <Playlist playlistName={this.state.playlistName}
                       onPlaylistNameChange={this.updatePlaylistName}
                       playlistTracks={this.state.playlistTracks}
-                      onRemove={this.removeTrack} />
+                      onRemove={this.removeTrack}
+                      onSavePlaylist={this.savePlaylist} />
           </div>
         </div>
       </div>
